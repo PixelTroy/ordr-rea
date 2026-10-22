@@ -40,3 +40,20 @@ textarea {
   border: 2px solid transparent;
   background-clip: padding-box;
 }
+
+.ProseMirror {
+  min-height: 12rem;
+  outline: none;
+}
+
+.ProseMirror p {
+  margin: 0.35rem 0;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: #9ca3af;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}

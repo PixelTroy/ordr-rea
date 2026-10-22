@@ -1,7 +1,9 @@
 'use client'
 
-import { LaterPage } from '@/components/project/later-page'
+import { useParams } from 'next/navigation'
+import { PageList } from '@/components/collab/pages'
 
-export default function PagesPage() {
-  return <LaterPage title="Pages" body="Collaborative pages for this project are planned with the editor milestone." />
+export default function ProjectPagesPage() {
+  const params = useParams<{ projectId: string }>()
+  return <PageList projectId={params.projectId} />
 }

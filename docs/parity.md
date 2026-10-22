@@ -13,12 +13,12 @@
 | 侧栏：New work item、Home、Drafts、Your work、Stickies | partial | M2 | New work item 打开创建对话框。草稿和 Your work 已接数据。便签仍是占位 |
 | 侧栏 Workspace：Projects、Views、Cycles、Analytics、Archives、Dashboards | partial | M3 | Cycles 打开进行中的周期。Archives 列出已归档项目。Views / Analytics / Dashboards 仍是路线图页 |
 | 侧栏展开的项目子导航 | implemented | M2 | Work items、Cycles、Modules、Views、Pages、Intake |
-| 项目内横栏：Overview、Work items、Cycles、Modules、Views、Pages、Intake | partial | M3 | Cycles 和 Modules 已可用。Views、Pages 仍是后续里程碑 |
+| 项目内横栏：Overview、Work items、Cycles、Modules、Views、Pages、Intake | partial | M4 | Cycles、Modules、Pages 已可用。Views 仍是后续里程碑 |
 | URL `/{ws}/`、`/{ws}/projects/`、`/{ws}/settings/` | implemented | M1 | |
 | URL `/{ws}/projects/{id}/issues/`、`/overview/`、`/intake/` | implemented | M2 | |
-| URL `/{ws}/projects/{id}/cycles|modules|views|pages/` | partial | M3 | 周期和模块已可用。Views、Pages 仍是空状态 |
+| URL `/{ws}/projects/{id}/cycles|modules|views|pages/` | partial | M4 | 周期、模块和页面已可用。Views 仍是空状态 |
 | URL `/{ws}/browse/{KEY-N}/` | implemented | M2 | |
-| URL `/{ws}/workspace-views/all-issues/`、`/active-cycles/`、`/analytics/`、`/notifications/`、`/wiki/` | partial | M1 | 路由存在，内容未做 |
+| URL `/{ws}/workspace-views/all-issues/`、`/active-cycles/`、`/analytics/`、`/notifications/`、`/wiki/` | partial | M4 | Active cycles、通知和 Wiki 已可用。All work items 与 Analytics 仍是占位 |
 | URL `/{ws}/drafts/`、`/{ws}/your-work/`、`/{ws}/archives/` | implemented | M2 | |
 | URL `/{ws}/settings/access-tokens/` | partial | M1 | 正确入口在工作区设置，不是 `/settings/profile/api-tokens/`。创建表单在 M5 |
 
@@ -57,7 +57,7 @@
 | 优先级、标签、负责人、子工作项、阻塞/关联/重复 | implemented | M2 | 关系类型 RELATES_TO、BLOCKS、BLOCKED_BY、DUPLICATE_OF。截图里的 Implements / Starts before 不做 |
 | 草稿、归档 | implemented | M2 | 项目可归档；工作项可标记草稿 |
 | 投票、订阅 | implemented | M2 | |
-| 评论、提及、表情 | not-implemented | M4 | 详情页有 Comments 页签占位 |
+| 评论、提及、表情 | partial | M4 | 评论、@提及和一种表情反应已可用。页面内评论线程未做 |
 | 工时、Updates、Transition、里程碑 | not-implemented | — | 不在范围内 |
 | 项目设置 General / Members / States / Labels / Estimates | partial | M2 | `/{ws}/settings/projects/{id}/`。Estimates 只有点数和 T-shirt。没有 Epics、类型、工作流 |
 
@@ -85,11 +85,11 @@
 
 | 能力 | 状态 | 里程碑 | 说明 |
 | --- | --- | --- | --- |
-| 项目 Pages：Public / Private / Archives | not-implemented | M4 | |
-| 页面编辑器 `/{ws}/projects/{id}/pages/{pageId}/` | not-implemented | M4 | 标题、正文、格式工具栏、autosave。Tiptap + Yjs |
-| Wiki 首页与页面 | not-implemented | M4 | 工作区级页面 |
-| 评论与 @提及 | not-implemented | M4 | 工作项详情和页面都要有 |
-| 通知 Inbox：All / Mentions | not-implemented | M4 | `/{ws}/notifications/` |
+| 项目 Pages：Public / Private / Archives | implemented | M4 | |
+| 页面编辑器 `/{ws}/projects/{id}/pages/{pageId}/` | implemented | M4 | Tiptap + Yjs，经 Socket.IO 同步，标题单独保存 |
+| Wiki 首页与页面 | partial | M4 | `/{ws}/wiki/` 列出工作区页面并可编辑。没有 Collections |
+| 评论与 @提及 | implemented | M4 | 评论在工作项详情。提及写入通知 |
+| 通知 Inbox：All / Mentions | implemented | M4 | `/{ws}/notifications/`。可全部标为已读 |
 
 ## 视图、搜索、开发者（M5）
 

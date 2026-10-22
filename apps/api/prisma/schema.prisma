@@ -38,6 +38,13 @@ model User {
   ledModules         Module[]          @relation("ModuleLead")
   authoredModules    Module[]          @relation("ModuleAuthor")
   moduleMemberships  ModuleMember[]
+  pages              Page[]            @relation("PageAuthor")
+  pageUpdates        Page[]            @relation("PageEditor")
+  pageFavorites      PageFavorite[]
+  comments           Comment[]
+  reactions          CommentReaction[]
+  notifications      Notification[]
+  notificationsSent  Notification[]    @relation("NotificationActor")
 
   @@map("users")
 }
@@ -80,6 +87,8 @@ model Workspace {
   invites  WorkspaceInvite[]
   projects Project[]
   recents  RecentVisit[]
+  pages    Page[]
+  notifications Notification[]
 
   @@map("workspaces")
 }
@@ -199,6 +208,7 @@ model Project {
   intakeItems     IntakeItem[]
   cycles          Cycle[]
   modules         Module[]
+  pages           Page[]
 
   @@unique([workspaceId, identifier])
   @@index([workspaceId])
@@ -289,6 +299,7 @@ model Issue {
   intake      IntakeItem[]
   cycleIssue  CycleIssue?
   moduleIssues ModuleIssue[]
+  comments    Comment[]
 
   @@unique([projectId, sequenceId])
   @@index([projectId, stateId])
@@ -546,4 +557,94 @@ model ModuleIssue {
   @@id([moduleId, issueId])
   @@index([issueId])
   @@map("module_issues")
+}
+
+enum PageAccess {
+  PUBLIC
+  PRIVATE
+}
+
+model Page {
+  id          String     @id @default(cuid())
+  workspaceId String     @map("workspace_id")
+  projectId   String?    @map("project_id")
+  title       String
+  access      PageAccess @default(PUBLIC)
+  contentJson Json       @default("{}") @map("content_json")
+  yjsState    Bytes?     @map("yjs_state")
+  createdById String     @map("created_by_id")
+  updatedById String?    @map("updated_by_id")
+  archivedAt  DateTime?  @map("archived_at")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project   Project?       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy User           @relation("PageAuthor", fields: [createdById], references: [id])
+  updatedBy User?          @relation("PageEditor", fields: [updatedById], references: [id])
+  favorites PageFavorite[]
+
+  @@index([workspaceId, projectId])
+  @@map("pages")
+}
+
+model PageFavorite {
+  pageId    String   @map("page_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([pageId, userId])
+  @@map("page_favorites")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  issueId   String   @map("issue_id")
+  authorId  String   @map("author_id")
+  bodyJson  Json     @map("body_json")
+  bodyText  String   @default("") @map("body_text")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  issue     Issue             @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  author    User              @relation(fields: [authorId], references: [id])
+  reactions CommentReaction[]
+
+  @@index([issueId, createdAt])
+  @@map("comments")
+}
+
+model CommentReaction {
+  commentId String @map("comment_id")
+  userId    String @map("user_id")
+  emoji     String
+
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([commentId, userId, emoji])
+  @@map("comment_reactions")
+}
+
+model Notification {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  workspaceId String    @map("workspace_id")
+  actorId     String?   @map("actor_id")
+  type        String
+  title       String
+  body        String    @default("")
+  href        String
+  readAt      DateTime? @map("read_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  actor     User?     @relation("NotificationActor", fields: [actorId], references: [id])
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("notifications")
 }

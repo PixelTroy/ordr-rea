@@ -7,6 +7,7 @@ import { PRIORITIES } from '@ordr/shared'
 import { ApiError, api } from '@/lib/api'
 import { PRIORITY_LABEL, ProjectDetail, WorkItem } from '@/lib/work'
 import { Button, ErrorText, Spinner, TextField } from '@/components/ui'
+import { CommentPanel } from '@/components/collab/comments'
 
 type Relation = {
   id: string
@@ -359,9 +360,9 @@ export default function BrowsePage() {
               </li>
             ))}
           </ul>
-        ) : (
-          <p className="mt-3 text-sm text-muted">Comments and mentions arrive with the pages milestone.</p>
-        )}
+        ) : projectId ? (
+          <CommentPanel slug={params.workspaceSlug} projectId={projectId} issueId={issue.id} />
+        ) : null}
         <ErrorText>{error}</ErrorText>
       </div>
       <aside className="border-l border-line bg-side p-4 text-sm">

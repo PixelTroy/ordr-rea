@@ -11,6 +11,7 @@ import { mkdir, readFile, writeFile } from 'fs/promises'
 import path from 'path'
 import { z } from 'zod'
 import { AccessService } from '../access/access.service'
+import { NotificationsService } from '../collab/notifications.service'
 import { randomToken } from '../auth/token.util'
 import { parseBody } from '../common/zod'
 import { PrismaService } from '../prisma/prisma.service'
@@ -68,6 +69,7 @@ export class IssuesService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(AccessService) private readonly access: AccessService,
+    @Inject(NotificationsService) private readonly notes: NotificationsService,
   ) {}
 
   async create(user: User, slug: string, projectId: string, body: unknown) {
@@ -300,6 +302,18 @@ export class IssuesService {
         },
       })
     })
+    const key = `${ctx.project.identifier}-${issue.sequenceId}`
+    const added = ids.filter((id) => !previous.some((row) => row.userId === id))
+    for (const userId of added) {
+      await this.notes.notify({
+        userId,
+        workspaceId: ctx.workspace.id,
+        actorId: user.id,
+        type: 'assignment',
+        title: `${user.displayName} assigned you ${key}`,
+        href: `/${slug}/browse/${key}`,
+      })
+    }
     return { issue: await this.present(issue.id, ctx.project.identifier) }
   }
 

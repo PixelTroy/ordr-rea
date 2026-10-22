@@ -3,6 +3,7 @@ import { APP_GUARD } from '@nestjs/core'
 import { AccessModule } from './access/access.module'
 import { AuthGuard } from './auth/auth.guard'
 import { AuthModule } from './auth/auth.module'
+import { CollabModule } from './collab/collab.module'
 import { HealthController } from './common/health.controller'
 import { IssuesModule } from './issues/issues.module'
 import { PlanningModule } from './planning/planning.module'
@@ -12,7 +13,7 @@ import { RedisModule } from './redis/redis.module'
 import { WorkspacesModule } from './workspaces/workspaces.module'
 
 @Module({
-  imports: [PrismaModule, RedisModule, AccessModule, AuthModule, WorkspacesModule, ProjectsModule, IssuesModule, PlanningModule],
+  imports: [PrismaModule, RedisModule, AccessModule, AuthModule, WorkspacesModule, ProjectsModule, CollabModule, IssuesModule, PlanningModule],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: AuthGuard }],
 })
