@@ -10,6 +10,7 @@ test('comment on a work item and open a collaborative page', async ({ page }) =>
   await page.getByTestId('signup-submit').click()
   await page.getByTestId('workspace-name').fill(`Lab ${stamp}`)
   await page.getByTestId('workspace-submit').click()
+  await expect(page).toHaveURL(new RegExp(`/${slug}`))
   await page.getByRole('link', { name: 'Projects', exact: true }).click()
   await page.getByTestId('add-project').click()
   await page.getByTestId('project-name').fill('Clone Research')

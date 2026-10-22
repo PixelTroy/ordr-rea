@@ -8,6 +8,7 @@ import { Cycle, ModuleStatus, Prisma, User } from '@prisma/client'
 import { MODULE_STATUSES } from '@ordr/shared'
 import { z } from 'zod'
 import { AccessService } from '../access/access.service'
+import { WebhooksService } from '../platform/webhooks.service'
 import { parseBody } from '../common/zod'
 import { PrismaService } from '../prisma/prisma.service'
 
@@ -45,6 +46,7 @@ export class PlanningService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(AccessService) private readonly access: AccessService,
+    @Inject(WebhooksService) private readonly hooks: WebhooksService,
   ) {}
 
   async createCycle(user: User, slug: string, projectId: string, body: unknown) {
@@ -70,6 +72,11 @@ export class PlanningService {
           ),
         },
       },
+    })
+    await this.hooks.emit(ctx.workspace.id, 'cycle.created', {
+      id: cycle.id,
+      name: cycle.name,
+      projectId: ctx.project.id,
     })
     return { cycle: await this.cycleDetail(ctx.project.id, ctx.project.identifier, cycle.id) }
   }
@@ -223,6 +230,11 @@ export class PlanningService {
           create: this.unique([user.id, ...(data.memberIds ?? [])]).map((userId) => ({ userId })),
         },
       },
+    })
+    await this.hooks.emit(ctx.workspace.id, 'module.created', {
+      id: module.id,
+      name: module.name,
+      projectId: ctx.project.id,
     })
     return { module: await this.moduleDetail(ctx.project.id, ctx.project.identifier, module.id) }
   }

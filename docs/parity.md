@@ -8,19 +8,19 @@
 
 | 能力 | 状态 | 里程碑 | 说明 |
 | --- | --- | --- | --- |
-| 顶栏：工作区切换、居中搜索、收件箱、用户菜单 | partial | M1 | 搜索框会打开对话框，结果在 M5。没有 Help / Get started |
+| 顶栏：工作区切换、居中搜索、收件箱、用户菜单 | partial | M5 | 搜索覆盖工作项、项目、周期、模块和页面。没有 Help / Get started |
 | 图标轨：Work、Wiki、AI、Settings、底部便签 | partial | M1 | AI 是说明页，没有助手 |
 | 侧栏：New work item、Home、Drafts、Your work、Stickies | partial | M2 | New work item 打开创建对话框。草稿和 Your work 已接数据。便签仍是占位 |
-| 侧栏 Workspace：Projects、Views、Cycles、Analytics、Archives、Dashboards | partial | M3 | Cycles 打开进行中的周期。Archives 列出已归档项目。Views / Analytics / Dashboards 仍是路线图页 |
+| 侧栏 Workspace：Projects、Views、Cycles、Analytics、Archives、Dashboards | partial | M5 | Views 打开 All work items。Cycles 是进行中的周期。Analytics / Dashboards 仍是占位 |
 | 侧栏展开的项目子导航 | implemented | M2 | Work items、Cycles、Modules、Views、Pages、Intake |
-| 项目内横栏：Overview、Work items、Cycles、Modules、Views、Pages、Intake | partial | M4 | Cycles、Modules、Pages 已可用。Views 仍是后续里程碑 |
+| 项目内横栏：Overview、Work items、Cycles、Modules、Views、Pages、Intake | implemented | M5 | |
 | URL `/{ws}/`、`/{ws}/projects/`、`/{ws}/settings/` | implemented | M1 | |
 | URL `/{ws}/projects/{id}/issues/`、`/overview/`、`/intake/` | implemented | M2 | |
-| URL `/{ws}/projects/{id}/cycles|modules|views|pages/` | partial | M4 | 周期、模块和页面已可用。Views 仍是空状态 |
+| URL `/{ws}/projects/{id}/cycles|modules|views|pages/` | implemented | M5 | 视图详情在 `.../views/{viewId}/` |
 | URL `/{ws}/browse/{KEY-N}/` | implemented | M2 | |
-| URL `/{ws}/workspace-views/all-issues/`、`/active-cycles/`、`/analytics/`、`/notifications/`、`/wiki/` | partial | M4 | Active cycles、通知和 Wiki 已可用。All work items 与 Analytics 仍是占位 |
+| URL `/{ws}/workspace-views/all-issues/`、`/active-cycles/`、`/analytics/`、`/notifications/`、`/wiki/` | partial | M5 | All work items、Active cycles、通知和 Wiki 已可用。Analytics 仍是占位 |
 | URL `/{ws}/drafts/`、`/{ws}/your-work/`、`/{ws}/archives/` | implemented | M2 | |
-| URL `/{ws}/settings/access-tokens/` | partial | M1 | 正确入口在工作区设置，不是 `/settings/profile/api-tokens/`。创建表单在 M5 |
+| URL `/{ws}/settings/access-tokens/` | implemented | M5 | 创建框：Title、Description、过期日期或 Never expires，然后 Generate token。明文只出现一次 |
 
 ## 认证与成员（M1）
 
@@ -95,13 +95,13 @@
 
 | 能力 | 状态 | 里程碑 | 说明 |
 | --- | --- | --- | --- |
-| 保存的视图，公开标记，收藏 | not-implemented | M5 | |
-| 视图详情 `/{ws}/projects/{id}/views/{viewId}/` | not-implemented | M5 | 过滤条、布局、Share。创建框：标题、描述、Public/Private、布局 |
-| 工作区 All work items | not-implemented | M5 | `/{ws}/workspace-views/all-issues/` |
-| 全局搜索 | not-implemented | M5 | |
-| 导入 / 导出 JSON | not-implemented | M5 | |
-| Webhooks 列表和创建表单 | not-implemented | M5 | `/{ws}/settings/webhooks/`。字段：标题、Payload URL、V1 范围（Projects、Cycles、Work items、Modules、Comments）以及 V2 的 created/updated/archived/deleted |
-| Personal access tokens | not-implemented | M5 | `/{ws}/settings/access-tokens/`。对话框：Title、Description、过期日期或 Never expires，然后 Generate token |
+| 保存的视图，公开标记，收藏 | implemented | M5 | 创建框：标题、描述、Public/Private、布局。列表显示公开标记和收藏 |
+| 视图详情 `/{ws}/projects/{id}/views/{viewId}/` | implemented | M5 | 过滤条、五种布局、Share（Public/Private）、收藏。筛选会写回视图 |
+| 工作区 All work items | implemented | M5 | `/{ws}/workspace-views/all-issues/` |
+| 全局搜索 | implemented | M5 | 工作项标题和描述、项目、周期、模块、页面 |
+| 导入 / 导出 JSON | implemented | M5 | `/{ws}/settings/exports/` 与 `/{ws}/settings/imports/`。形状是项目、状态、标签、工作项。只有管理员能导入 |
+| Webhooks 列表和创建表单 | implemented | M5 | `/{ws}/settings/webhooks/`。字段：标题、Payload URL、V1 范围（Projects、Cycles、Work Items、Modules、Work item comments）以及 V2 的 created/updated/archived/deleted。投递带 `X-Ordr-Signature` |
+| Personal access tokens | implemented | M5 | `/{ws}/settings/access-tokens/`。对话框：Title、Description、过期日期或 Never expires，然后 Generate token。`Authorization: Bearer` 只对该工作区有效 |
 
 ## 明确不实现
 

@@ -137,27 +137,27 @@ M1 已经落库的是用户、会话、工作区、成员和邀请。后面的�
 
 首页小组件。sticky 属于用户和工作区。recent 在打开项目、工作项、页面时更新。
 
-## M5 视图、搜索、令牌、Webhook
+## M5（已迁移）视图、搜索、令牌、Webhook
 
 ### saved_views
 
-`workspace_id`，可选 `project_id`，`name`，`layout`（`LIST | KANBAN | CALENDAR | SPREADSHEET | GANTT`），`filters` JSON，`display` JSON（属性开关、分组、排序），`is_public`，`created_by_id`。工作区有内置的 All work items，不落库。
+`workspace_id`，可选 `project_id`，`name`，`description`，`access`（`PUBLIC | PRIVATE`，复用页面的枚举），`layout`（`LIST | KANBAN | CALENDAR | SPREADSHEET | GANTT`），`filters` JSON（priority、stateId、assigneeId、labelId、search），`created_by_id`。工作区的 All work items 不落库。
 
 ### view_favorites
 
 `(view_id, user_id)`。
 
-搜索不另建表，用 Postgres `ILIKE` / `tsvector` 覆盖工作项标题与描述、项目、周期、模块、页面。
+搜索不另建表。`GET /search?q=` 用 `ILIKE` 覆盖工作项标题与描述、项目名、周期、模块、页面标题。
 
 ### api_tokens
 
-`user_id`，`name`，`token_hash`，`prefix`（展示用），`last_used_at`，`expires_at`。明文只在创建时返回一次，前缀 `ordr_`。`Authorization: Bearer` 与会话 cookie 走同一套守卫。
+`user_id`，`workspace_id`，`title`，`description`，`token_hash`（SHA-256），`prefix`（展示用），`last_used_at`，`expires_at`（空表示永不过期）。明文只在创建时返回一次，前缀 `ordr_`。`Authorization: Bearer` 与会话 cookie 走同一套守卫，并且只能访问签发它的工作区。
 
 ### webhooks / webhook_deliveries
 
-工作区级。`url`，`secret`，`events`（`issue.created`、`issue.updated`、`issue.deleted`、`comment.created`、`project.created`、`cycle.created`、`module.created`），`is_active`。投递带 `X-Ordr-Signature`（HMAC-SHA256）。每次尝试写入 delivery：状态码、响应片段、是否成功。
+工作区级。`title`，`url`，`secret`，`events` JSON：`v1` 是 `projects | cycles | issues | modules | comments`，`v2` 是 `created | updated | archived | deleted`。`is_active`。实际发出的事件是 `project.created`、`cycle.created`、`module.created`、`issue.created`、`issue.updated`、`comment.created`。正文是 `{ event, payload }`，头 `X-Ordr-Signature` 为 HMAC-SHA256。每次尝试写入 delivery：状态码、响应片段、是否成功。
 
-导入导出不另建表。导出是工作区或项目的 JSON；导入按同一形状创建项目、状态、标签和工作项。
+导入导出不另建表。导出是当前用户能看见的项目 JSON；导入按同一形状创建项目、状态、标签和工作项，仅管理员可用。
 
 ## 明确不做的 Plane 能力
 

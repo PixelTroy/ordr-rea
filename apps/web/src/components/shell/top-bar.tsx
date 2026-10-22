@@ -16,6 +16,8 @@ export function TopBar() {
   const { workspace, workspaces, slug } = useWorkspace()
   const [menu, setMenu] = useState<'switch' | 'user' | 'search' | 'create' | null>(null)
   const [query, setQuery] = useState('')
+  const [results, setResults] = useState<Array<{ type: string; id: string; title: string; href: string; subtitle: string }>>([])
+  const [searching, setSearching] = useState(false)
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -24,6 +26,26 @@ export function TopBar() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
+
+  useEffect(() => {
+    if (menu !== 'search') return
+    const q = query.trim()
+    if (!q) {
+      setResults([])
+      setSearching(false)
+      return
+    }
+    const handle = window.setTimeout(() => {
+      setSearching(true)
+      api<{ results: Array<{ type: string; id: string; title: string; href: string; subtitle: string }> }>(
+        `/api/v1/workspaces/${slug}/search?q=${encodeURIComponent(q)}`,
+      )
+        .then((body) => setResults(body.results))
+        .catch(() => setResults([]))
+        .finally(() => setSearching(false))
+    }, 200)
+    return () => window.clearTimeout(handle)
+  }, [menu, query, slug])
 
   return (
     <header className="flex h-12 shrink-0 items-center gap-3 border-b border-line bg-white px-3">
@@ -150,17 +172,38 @@ export function TopBar() {
               <Search size={16} className="text-muted" />
               <input
                 autoFocus
+                data-testid="search-input"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Start typing to search across work items, projects, cycles, modules and more"
                 className="h-12 w-full bg-transparent text-sm outline-none"
               />
             </div>
-            <p className="px-4 py-6 text-sm text-muted">
-              {query
-                ? 'Search across work items, projects, cycles, modules, and pages arrives with later milestones.'
-                : 'Type to search. Results will include work items, projects, cycles, modules, and pages.'}
-            </p>
+            <div className="max-h-80 overflow-auto py-2">
+              {!query.trim() ? (
+                <p className="px-4 py-6 text-sm text-muted">
+                  Type to search work items, projects, cycles, modules, and pages.
+                </p>
+              ) : searching && results.length === 0 ? (
+                <p className="px-4 py-6 text-sm text-muted">Searching…</p>
+              ) : results.length === 0 ? (
+                <p className="px-4 py-6 text-sm text-muted">No matches.</p>
+              ) : (
+                results.map((result) => (
+                  <Link
+                    key={`${result.type}-${result.id}`}
+                    href={result.href}
+                    data-testid="search-result"
+                    onClick={() => setMenu(null)}
+                    className="block px-4 py-2 hover:bg-canvas"
+                  >
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">{result.type}</span>
+                    <span className="block text-sm">{result.title}</span>
+                    <span className="block text-xs text-muted">{result.subtitle}</span>
+                  </Link>
+                ))
+              )}
+            </div>
           </div>
         </div>
       ) : null}

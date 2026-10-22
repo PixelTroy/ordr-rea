@@ -27,6 +27,16 @@ const LAYOUTS = [
 
 type LayoutId = (typeof LAYOUTS)[number]['id']
 
+export type BoardFilters = {
+  search: string
+  stateId: string
+  priority: string
+  assigneeId: string
+  labelId: string
+}
+
+const EMPTY_FILTERS: BoardFilters = { search: '', stateId: '', priority: '', assigneeId: '', labelId: '' }
+
 type DisplayPrefs = {
   layout: LayoutId
   groupBy: 'state' | 'priority' | 'none'
@@ -78,14 +88,28 @@ function loadPrefs(projectId: string): DisplayPrefs {
   }
 }
 
-export function WorkItemsBoard({ slug, projectId }: { slug: string; projectId: string }) {
+export function WorkItemsBoard({
+  slug,
+  projectId,
+  view,
+}: {
+  slug: string
+  projectId: string
+  view?: {
+    id: string
+    layout?: string
+    filters?: Partial<BoardFilters>
+    onFiltersChange?: (filters: BoardFilters) => void
+    onLayoutChange?: (layout: LayoutId) => void
+  }
+}) {
   const [project, setProject] = useState<ProjectDetail | null>(null)
   const [issues, setIssues] = useState<WorkItem[]>([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [prefs, setPrefs] = useState<DisplayPrefs>(DEFAULT_PREFS)
   const [menu, setMenu] = useState<'display' | 'filter' | null>(null)
-  const [filters, setFilters] = useState({ search: '', stateId: '', priority: '', assigneeId: '', labelId: '' })
+  const [filters, setFilters] = useState<BoardFilters>(EMPTY_FILTERS)
   const [seed, setSeed] = useState<CreateIssueSeed | null>(null)
   const [month, setMonth] = useState(() => new Date())
 
@@ -102,17 +126,29 @@ export function WorkItemsBoard({ slug, projectId }: { slug: string; projectId: s
   }
 
   useEffect(() => {
-    setPrefs(loadPrefs(projectId))
+    const loaded = loadPrefs(projectId)
+    if (view?.layout) {
+      const mapped = view.layout.toLowerCase() as LayoutId
+      if (LAYOUTS.some((item) => item.id === mapped)) loaded.layout = mapped
+    }
+    setPrefs(loaded)
+    if (view) setFilters({ ...EMPTY_FILTERS, ...view.filters })
     setLoading(true)
     reload().finally(() => setLoading(false))
-  }, [projectId, slug])
+  }, [projectId, slug, view?.id])
 
   function updatePrefs(next: Partial<DisplayPrefs>) {
     setPrefs((current) => {
       const merged = { ...current, ...next }
-      localStorage.setItem(`ordr:display:${projectId}`, JSON.stringify(merged))
+      if (!view) localStorage.setItem(`ordr:display:${projectId}`, JSON.stringify(merged))
       return merged
     })
+    if (next.layout) view?.onLayoutChange?.(next.layout)
+  }
+
+  function changeFilters(next: BoardFilters) {
+    setFilters(next)
+    view?.onFiltersChange?.(next)
   }
 
   const visible = useMemo(() => {
@@ -208,38 +244,38 @@ export function WorkItemsBoard({ slug, projectId }: { slug: string; projectId: s
               <input
                 data-testid="filter-search"
                 value={filters.search}
-                onChange={(event) => setFilters({ ...filters, search: event.target.value })}
+                onChange={(event) => changeFilters({ ...filters, search: event.target.value })}
                 placeholder="Search title"
                 className="mb-2 h-8 w-full rounded-md border border-line px-2 text-sm"
               />
               <FilterSelect
                 label="State"
                 value={filters.stateId}
-                onChange={(stateId) => setFilters({ ...filters, stateId })}
+                onChange={(stateId) => changeFilters({ ...filters, stateId })}
                 options={project.states.map((state) => ({ value: state.id, label: state.name }))}
               />
               <FilterSelect
                 label="Priority"
                 value={filters.priority}
-                onChange={(priority) => setFilters({ ...filters, priority })}
+                onChange={(priority) => changeFilters({ ...filters, priority })}
                 options={Object.entries(PRIORITY_LABEL).map(([value, label]) => ({ value, label }))}
               />
               <FilterSelect
                 label="Assignee"
                 value={filters.assigneeId}
-                onChange={(assigneeId) => setFilters({ ...filters, assigneeId })}
+                onChange={(assigneeId) => changeFilters({ ...filters, assigneeId })}
                 options={project.members.map((member) => ({ value: member.user.id, label: member.user.displayName }))}
               />
               <FilterSelect
                 label="Label"
                 value={filters.labelId}
-                onChange={(labelId) => setFilters({ ...filters, labelId })}
+                onChange={(labelId) => changeFilters({ ...filters, labelId })}
                 options={project.labels.map((label) => ({ value: label.id, label: label.name }))}
               />
               <button
                 type="button"
                 className="mt-2 text-xs text-muted underline"
-                onClick={() => setFilters({ search: '', stateId: '', priority: '', assigneeId: '', labelId: '' })}
+                onClick={() => changeFilters(EMPTY_FILTERS)}
               >
                 Clear all
               </button>

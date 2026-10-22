@@ -10,6 +10,7 @@ import { Prisma, User } from '@prisma/client'
 import { DEFAULT_STATES, PROJECT_ROLES } from '@ordr/shared'
 import { z } from 'zod'
 import { AccessService } from '../access/access.service'
+import { WebhooksService } from '../platform/webhooks.service'
 import { parseBody } from '../common/zod'
 import { PrismaService } from '../prisma/prisma.service'
 
@@ -77,6 +78,7 @@ export class ProjectsService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(AccessService) private readonly access: AccessService,
+    @Inject(WebhooksService) private readonly hooks: WebhooksService,
   ) {}
 
   async create(user: User, slug: string, body: unknown) {
@@ -110,6 +112,11 @@ export class ProjectsService {
         },
       },
       include: { lead: userBrief, _count: { select: { members: true } } },
+    })
+    await this.hooks.emit(workspace.id, 'project.created', {
+      id: project.id,
+      name: project.name,
+      identifier: project.identifier,
     })
     return { project: this.present(project, true) }
   }

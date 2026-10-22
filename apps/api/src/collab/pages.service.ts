@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { AccessService } from '../access/access.service'
 import { parseBody } from '../common/zod'
 import { PrismaService } from '../prisma/prisma.service'
+import { WebhooksService } from '../platform/webhooks.service'
 import { asJson, mentionIds, NotificationsService, plainText } from './notifications.service'
 
 const pageSchema = z.object({
@@ -30,6 +31,7 @@ export class PagesService {
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(AccessService) private readonly access: AccessService,
     @Inject(NotificationsService) private readonly notes: NotificationsService,
+    @Inject(WebhooksService) private readonly hooks: WebhooksService,
   ) {}
 
   async create(user: User, slug: string, body: unknown) {
@@ -204,6 +206,12 @@ export class PagesService {
         action: 'comment',
         newValue: text.slice(0, 180),
       },
+    })
+    await this.hooks.emit(ctx.workspace.id, 'comment.created', {
+      id: comment.id,
+      issueId,
+      projectId: ctx.project.id,
+      body: text.slice(0, 500),
     })
     return { comment }
   }

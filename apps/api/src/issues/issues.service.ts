@@ -12,6 +12,7 @@ import path from 'path'
 import { z } from 'zod'
 import { AccessService } from '../access/access.service'
 import { NotificationsService } from '../collab/notifications.service'
+import { WebhooksService } from '../platform/webhooks.service'
 import { randomToken } from '../auth/token.util'
 import { parseBody } from '../common/zod'
 import { PrismaService } from '../prisma/prisma.service'
@@ -70,6 +71,7 @@ export class IssuesService {
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(AccessService) private readonly access: AccessService,
     @Inject(NotificationsService) private readonly notes: NotificationsService,
+    @Inject(WebhooksService) private readonly hooks: WebhooksService,
   ) {}
 
   async create(user: User, slug: string, projectId: string, body: unknown) {
@@ -131,7 +133,14 @@ export class IssuesService {
       })
       return created
     })
-    return { issue: await this.present(issue.id, ctx.project.identifier) }
+    const presented = await this.present(issue.id, ctx.project.identifier)
+    await this.hooks.emit(ctx.workspace.id, 'issue.created', {
+      id: presented.id,
+      key: presented.key,
+      title: presented.title,
+      projectId: ctx.project.id,
+    })
+    return { issue: presented }
   }
 
   async list(user: User, slug: string, projectId: string, query: Record<string, string | undefined>) {
@@ -272,7 +281,14 @@ export class IssuesService {
         })
       }
     })
-    return { issue: await this.present(existing.id, ctx.project.identifier) }
+    const presented = await this.present(existing.id, ctx.project.identifier)
+    await this.hooks.emit(ctx.workspace.id, 'issue.updated', {
+      id: presented.id,
+      key: presented.key,
+      title: presented.title,
+      projectId: ctx.project.id,
+    })
+    return { issue: presented }
   }
 
   async setAssignees(user: User, slug: string, projectId: string, issueId: string, assigneeIds: string[]) {

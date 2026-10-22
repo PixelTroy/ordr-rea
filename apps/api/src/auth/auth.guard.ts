@@ -4,7 +4,7 @@ import { User } from '@prisma/client'
 import * as jwt from 'jsonwebtoken'
 import { PrismaService } from '../prisma/prisma.service'
 import { IS_PUBLIC } from './public.decorator'
-import { accessSecret } from './token.util'
+import { accessSecret, sha256 } from './token.util'
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -23,10 +23,16 @@ export class AuthGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest()
     const header = request.headers?.authorization as string | undefined
-    const token = header?.startsWith('Bearer ')
-      ? header.slice('Bearer '.length)
-      : request.cookies?.ordr_access
+    const bearer = header?.startsWith('Bearer ') ? header.slice('Bearer '.length).trim() : undefined
+    const token = bearer || request.cookies?.ordr_access
     if (!token) throw new UnauthorizedException()
+
+    if (bearer?.startsWith('ordr_')) {
+      const apiUser = await this.userFromApiToken(bearer, request.params?.slug)
+      if (!apiUser) throw new UnauthorizedException()
+      request.user = apiUser
+      return true
+    }
 
     try {
       const payload = jwt.verify(token, accessSecret()) as { sub?: string; sid?: string; type?: string }
@@ -40,5 +46,16 @@ export class AuthGuard implements CanActivate {
     } catch {
       throw new UnauthorizedException()
     }
+  }
+
+  private async userFromApiToken(token: string, slug?: string): Promise<User | null> {
+    const row = await this.prisma.apiToken.findUnique({
+      where: { tokenHash: sha256(token) },
+      include: { user: true, workspace: { select: { slug: true } } },
+    })
+    if (!row || (row.expiresAt && row.expiresAt.getTime() <= Date.now())) return null
+    if (slug && row.workspace.slug !== slug) return null
+    await this.prisma.apiToken.update({ where: { id: row.id }, data: { lastUsedAt: new Date() } }).catch(() => undefined)
+    return row.user
   }
 }

@@ -32,7 +32,7 @@ export default function WorkspaceHomePage() {
       <p className="mt-1 text-sm text-muted">{workspace.name}</p>
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         <Widget title="Quick links" action="Add quick link">
-          <p className="text-sm text-muted">Pin a project, view, or page. Quick links arrive with saved views.</p>
+          <p className="text-sm text-muted">Open a project and save a view. Quick links are not stored yet.</p>
         </Widget>
         <Widget title="Recents" action="All">
           {recents.length === 0 ? <p className="text-sm text-muted">Work items and projects you open will show up here.</p> : null}
