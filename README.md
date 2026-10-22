@@ -41,6 +41,14 @@ docker compose up --build
 
 注册后创建工作区，在 **Settings → Members** 里邀请。页面上会给出 `http://localhost:3000/invite/...`。
 
+演示数据（工作区 `gootroy`，项目 Clone Research）：
+
+```bash
+node scripts/seed-demo.mjs
+```
+
+用 `demo@ordr.local` / `password123` 登录。里面有不同状态和优先级的工作项、子工作项、Blocking 关系、评论、进行中的 Sprint Alpha、即将开始的 Sprint Beta、模块 Competitor Teardown、视图 High priority research，以及页面 Competitor Research Spec。重复运行会删掉并重建这个工作区。
+
 只想跑依赖、自己起应用：
 
 ```bash

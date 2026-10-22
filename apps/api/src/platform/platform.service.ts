@@ -23,6 +23,8 @@ const filtersSchema = z.object({
   assigneeId: z.string().max(80).optional(),
   labelId: z.string().max(80).optional(),
   search: z.string().max(200).optional(),
+  cycleId: z.string().max(80).optional(),
+  moduleId: z.string().max(80).optional(),
 })
 
 const viewSchema = z.object({

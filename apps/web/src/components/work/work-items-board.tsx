@@ -33,9 +33,19 @@ export type BoardFilters = {
   priority: string
   assigneeId: string
   labelId: string
+  cycleId: string
+  moduleId: string
 }
 
-const EMPTY_FILTERS: BoardFilters = { search: '', stateId: '', priority: '', assigneeId: '', labelId: '' }
+const EMPTY_FILTERS: BoardFilters = {
+  search: '',
+  stateId: '',
+  priority: '',
+  assigneeId: '',
+  labelId: '',
+  cycleId: '',
+  moduleId: '',
+}
 
 type DisplayPrefs = {
   layout: LayoutId
@@ -67,6 +77,8 @@ const DEFAULT_PREFS: DisplayPrefs = {
     sub: true,
     attachment: true,
     link: true,
+    cycle: true,
+    module: true,
   },
 }
 
@@ -159,6 +171,8 @@ export function WorkItemsBoard({
       if (filters.priority && issue.priority !== filters.priority) return false
       if (filters.assigneeId && !issue.assignees.some((user) => user.id === filters.assigneeId)) return false
       if (filters.labelId && !issue.labels.some((label) => label.id === filters.labelId)) return false
+      if (filters.cycleId && issue.cycle?.id !== filters.cycleId) return false
+      if (filters.moduleId && !issue.modules?.some((module) => module.id === filters.moduleId)) return false
       return true
     })
     const rank = (issue: WorkItem) => {
@@ -189,7 +203,13 @@ export function WorkItemsBoard({
   }, [project, prefs.groupBy, visible])
 
   const shownGroups = prefs.showEmpty ? groups : groups.filter((group) => group.items.length > 0)
-  const activeFilters = [filters.stateId, filters.priority, filters.assigneeId, filters.labelId, filters.search].filter(Boolean).length
+  const activeFilters = [filters.stateId, filters.priority, filters.assigneeId, filters.labelId, filters.search, filters.cycleId, filters.moduleId].filter(Boolean).length
+  const cycleOptions = [...new Map(issues.filter((issue) => issue.cycle).map((issue) => [issue.cycle!.id, issue.cycle!.name])).entries()].map(
+    ([value, label]) => ({ value, label }),
+  )
+  const moduleOptions = [
+    ...new Map(issues.flatMap((issue) => issue.modules || []).map((module) => [module.id, module.name])).entries(),
+  ].map(([value, label]) => ({ value, label }))
 
   async function moveIssue(issueId: string, stateId: string) {
     const issue = issues.find((item) => item.id === issueId)
@@ -271,6 +291,18 @@ export function WorkItemsBoard({
                 value={filters.labelId}
                 onChange={(labelId) => changeFilters({ ...filters, labelId })}
                 options={project.labels.map((label) => ({ value: label.id, label: label.name }))}
+              />
+              <FilterSelect
+                label="Cycle"
+                value={filters.cycleId}
+                onChange={(cycleId) => changeFilters({ ...filters, cycleId })}
+                options={cycleOptions}
+              />
+              <FilterSelect
+                label="Module"
+                value={filters.moduleId}
+                onChange={(moduleId) => changeFilters({ ...filters, moduleId })}
+                options={moduleOptions}
               />
               <button
                 type="button"
@@ -498,12 +530,14 @@ function Chips({ issue, prefs }: { issue: WorkItem; prefs: DisplayPrefs }) {
             </span>
           ))
         : null}
-      {issue.cycle ? <span className="rounded bg-canvas px-1.5 py-0.5">{issue.cycle.name}</span> : null}
-      {issue.modules?.map((module) => (
-        <span key={module.id} className="rounded bg-canvas px-1.5 py-0.5">
-          {module.name}
-        </span>
-      ))}
+      {prefs.properties.cycle && issue.cycle ? <span className="rounded bg-canvas px-1.5 py-0.5">{issue.cycle.name}</span> : null}
+      {prefs.properties.module
+        ? issue.modules?.map((module) => (
+            <span key={module.id} className="rounded bg-canvas px-1.5 py-0.5">
+              {module.name}
+            </span>
+          ))
+        : null}
       {prefs.properties.sub && issue.subIssueCount ? <span>{issue.subIssueDone}/{issue.subIssueCount}</span> : null}
       {prefs.properties.attachment && issue.attachmentCount ? <span>{issue.attachmentCount} files</span> : null}
       {prefs.properties.link && issue.linkCount ? <span>{issue.linkCount} links</span> : null}
@@ -601,7 +635,7 @@ function Spreadsheet({ issues, slug }: { issues: WorkItem[]; slug: string }) {
     <table className="w-full border-collapse text-left text-sm">
       <thead className="sticky top-0 bg-canvas text-xs text-muted">
         <tr>
-          {['Work item', 'State', 'Priority', 'Assignees', 'Labels', 'Start date', 'Due date'].map((column) => (
+          {['Work item', 'State', 'Priority', 'Assignees', 'Labels', 'Modules', 'Cycle', 'Start date', 'Due date'].map((column) => (
             <th key={column} className="border-b border-line px-3 py-2 font-medium">
               {column}
             </th>
@@ -621,6 +655,8 @@ function Spreadsheet({ issues, slug }: { issues: WorkItem[]; slug: string }) {
             <td className="px-3 py-2">{PRIORITY_LABEL[issue.priority]}</td>
             <td className="px-3 py-2">{issue.assignees.map((user) => user.displayName).join(', ')}</td>
             <td className="px-3 py-2">{issue.labels.map((label) => label.name).join(', ')}</td>
+            <td className="px-3 py-2">{issue.modules?.map((module) => module.name).join(', ')}</td>
+            <td className="px-3 py-2">{issue.cycle?.name || ''}</td>
             <td className="px-3 py-2">{formatDay(issue.startDate)}</td>
             <td className="px-3 py-2">{formatDay(issue.dueDate)}</td>
           </tr>
@@ -641,6 +677,7 @@ function Gantt({
   scale: 'week' | 'month' | 'quarter'
   onScale: (scale: 'week' | 'month' | 'quarter') => void
 }) {
+  const spanDays = scale === 'week' ? 14 : scale === 'quarter' ? 90 : 35
   const dated = issues.map((issue) => {
     const start = issue.startDate ? new Date(issue.startDate) : issue.dueDate ? new Date(issue.dueDate) : null
     const end = issue.dueDate ? new Date(issue.dueDate) : start
@@ -650,7 +687,6 @@ function Gantt({
         : 8
     return { issue, start, width }
   })
-  const spanDays = scale === 'week' ? 14 : scale === 'quarter' ? 90 : 35
   const origin = new Date()
   origin.setHours(0, 0, 0, 0)
   return (

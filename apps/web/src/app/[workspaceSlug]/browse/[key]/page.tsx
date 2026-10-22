@@ -36,6 +36,18 @@ type Detail = WorkItem & {
   subscribed: boolean
 }
 
+const RELATION_LABEL: Record<string, string> = {
+  RELATES_TO: 'Relates to',
+  BLOCKS: 'Blocking',
+  BLOCKED_BY: 'Blocked by',
+  DUPLICATE_OF: 'Duplicate of',
+}
+
+function relationLabel(type: string, incoming?: boolean) {
+  const label = RELATION_LABEL[type] || type
+  return incoming ? `Incoming ${label.toLowerCase()}` : label
+}
+
 export default function BrowsePage() {
   const params = useParams<{ workspaceSlug: string; key: string }>()
   const [issue, setIssue] = useState<Detail | null>(null)
@@ -279,7 +291,7 @@ export default function BrowsePage() {
           <ul className="mt-2 space-y-1 text-sm">
             {issue.relations.map((relation) => (
               <li key={relation.id} data-testid="relation-row">
-                {relation.incoming ? 'Incoming' : relation.type} · {relation.key} {relation.title}
+                {relationLabel(relation.type, relation.incoming)} · {relation.key} {relation.title}
               </li>
             ))}
           </ul>
@@ -389,6 +401,8 @@ export default function BrowsePage() {
           </select>
         </label>
         <p className="mt-4 text-xs font-semibold text-muted">PROJECT</p>
+        <p className="mt-2">Cycle {issue.cycle?.name || 'None'}</p>
+        <p className="mt-2">Modules {issue.modules?.length ? issue.modules.map((module) => module.name).join(', ') : 'None'}</p>
         <p className="mt-2">{project?.name}</p>
         <p className="mt-4 text-xs text-muted">Created by {issue.createdBy.displayName}</p>
       </aside>

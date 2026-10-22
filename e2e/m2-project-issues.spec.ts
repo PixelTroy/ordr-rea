@@ -41,6 +41,6 @@ test('create a project, then a work item visible in list, kanban, and detail', a
 
   await page.getByTestId('relation-key').fill('CLONE-2')
   await page.getByTestId('relation-submit').click()
-  await expect(page.getByTestId('relation-row')).toContainText('BLOCKS')
+  await expect(page.getByTestId('relation-row')).toContainText('Blocking')
   await expect(page.getByTestId('relation-row')).toContainText('CLONE-2')
 })
