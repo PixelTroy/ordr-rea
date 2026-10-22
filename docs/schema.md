@@ -93,11 +93,11 @@ M1 已经落库的是用户、会话、工作区、成员和邀请。后面的�
 
 `project_id`，`title`，`description`，`status`（`PENDING | ACCEPTED | DECLINED`），`source`，接受后的 `issue_id`。
 
-## M3 周期与模块
+## M3（已迁移）周期与模块
 
 ### cycles
 
-`project_id`，`name`，`description`，`start_date`，`end_date`，`completed_at`。进行中 / 即将开始 / 已完成由日期和 `completed_at` 推导。一个工作项同时只在一个周期里。
+`project_id`，`name`，`description`，`start_date`，`end_date`，`lead_id`，`completed_at`，成员表 `cycle_members`。进行中 / 即将开始 / 已完成由日期和 `completed_at` 推导。日期范围不能重叠，因此同一天最多一个进行中的周期。一个工作项同时只在一个周期里。
 
 ### cycle_issues
 
@@ -107,7 +107,7 @@ M1 已经落库的是用户、会话、工作区、成员和邀请。后面的�
 
 ### modules
 
-`name`，`description`，`status`（`BACKLOG | PLANNED | IN_PROGRESS | PAUSED | COMPLETED | CANCELLED`），`start_date`，`target_date`，`lead_id`。
+`name`，`description`，`status`（`BACKLOG | PLANNED | IN_PROGRESS | PAUSED | COMPLETED | CANCELLED`），`start_date`，`target_date`，`lead_id`，成员表 `module_members`。
 
 ### module_issues
 

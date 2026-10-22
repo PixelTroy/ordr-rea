@@ -462,6 +462,12 @@ function Chips({ issue, prefs }: { issue: WorkItem; prefs: DisplayPrefs }) {
             </span>
           ))
         : null}
+      {issue.cycle ? <span className="rounded bg-canvas px-1.5 py-0.5">{issue.cycle.name}</span> : null}
+      {issue.modules?.map((module) => (
+        <span key={module.id} className="rounded bg-canvas px-1.5 py-0.5">
+          {module.name}
+        </span>
+      ))}
       {prefs.properties.sub && issue.subIssueCount ? <span>{issue.subIssueDone}/{issue.subIssueCount}</span> : null}
       {prefs.properties.attachment && issue.attachmentCount ? <span>{issue.attachmentCount} files</span> : null}
       {prefs.properties.link && issue.linkCount ? <span>{issue.linkCount} links</span> : null}

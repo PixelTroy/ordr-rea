@@ -32,6 +32,12 @@ model User {
   attachments        Attachment[]
   intakeItems        IntakeItem[]
   recentVisits       RecentVisit[]
+  ledCycles          Cycle[]           @relation("CycleLead")
+  authoredCycles     Cycle[]           @relation("CycleAuthor")
+  cycleMemberships   CycleMember[]
+  ledModules         Module[]          @relation("ModuleLead")
+  authoredModules    Module[]          @relation("ModuleAuthor")
+  moduleMemberships  ModuleMember[]
 
   @@map("users")
 }
@@ -191,6 +197,8 @@ model Project {
   labels          Label[]
   issues          Issue[]
   intakeItems     IntakeItem[]
+  cycles          Cycle[]
+  modules         Module[]
 
   @@unique([workspaceId, identifier])
   @@index([workspaceId])
@@ -279,6 +287,8 @@ model Issue {
   subscribers IssueSubscription[]
   activities  Activity[]
   intake      IntakeItem[]
+  cycleIssue  CycleIssue?
+  moduleIssues ModuleIssue[]
 
   @@unique([projectId, sequenceId])
   @@index([projectId, stateId])
@@ -434,4 +444,106 @@ model RecentVisit {
   @@unique([userId, entityType, entityId])
   @@index([userId, visitedAt])
   @@map("recent_visits")
+}
+
+enum ModuleStatus {
+  BACKLOG
+  PLANNED
+  IN_PROGRESS
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+model Cycle {
+  id          String    @id @default(cuid())
+  projectId   String    @map("project_id")
+  name        String
+  description String    @default("")
+  startDate   DateTime  @map("start_date")
+  endDate     DateTime  @map("end_date")
+  leadId      String?   @map("lead_id")
+  completedAt DateTime? @map("completed_at")
+  createdById String    @map("created_by_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  project   Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  lead      User?         @relation("CycleLead", fields: [leadId], references: [id])
+  createdBy User          @relation("CycleAuthor", fields: [createdById], references: [id])
+  members   CycleMember[]
+  issues    CycleIssue[]
+
+  @@index([projectId, startDate])
+  @@map("cycles")
+}
+
+model CycleMember {
+  cycleId String @map("cycle_id")
+  userId  String @map("user_id")
+
+  cycle Cycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([cycleId, userId])
+  @@map("cycle_members")
+}
+
+model CycleIssue {
+  cycleId   String   @map("cycle_id")
+  issueId   String   @unique @map("issue_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  cycle Cycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@id([cycleId, issueId])
+  @@map("cycle_issues")
+}
+
+model Module {
+  id          String       @id @default(cuid())
+  projectId   String       @map("project_id")
+  name        String
+  description String       @default("")
+  status      ModuleStatus @default(BACKLOG)
+  startDate   DateTime?    @map("start_date")
+  targetDate  DateTime?    @map("target_date")
+  leadId      String?      @map("lead_id")
+  createdById String       @map("created_by_id")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  lead      User?          @relation("ModuleLead", fields: [leadId], references: [id])
+  createdBy User           @relation("ModuleAuthor", fields: [createdById], references: [id])
+  members   ModuleMember[]
+  issues    ModuleIssue[]
+
+  @@index([projectId])
+  @@map("modules")
+}
+
+model ModuleMember {
+  moduleId String @map("module_id")
+  userId   String @map("user_id")
+
+  module Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([moduleId, userId])
+  @@map("module_members")
+}
+
+model ModuleIssue {
+  moduleId  String   @map("module_id")
+  issueId   String   @map("issue_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  module Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  issue  Issue  @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@id([moduleId, issueId])
+  @@index([issueId])
+  @@map("module_issues")
 }

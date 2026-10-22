@@ -1,12 +1,7 @@
 'use client'
 
-import { LaterPage } from '@/components/project/later-page'
+import { CycleList } from '@/components/planning/cycles'
 
 export default function CyclesPage() {
-  return (
-    <LaterPage
-      title="Cycles"
-      body="Active, upcoming, and completed cycles, with dates and a burn-down chart, are the next milestone."
-    />
-  )
+  return <CycleList />
 }

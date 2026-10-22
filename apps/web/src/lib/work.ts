@@ -75,7 +75,9 @@ export type WorkItem = {
   linkCount: number
   relationCount: number
   attachmentCount: number
-  startDate: string | null
+      cycle: { id: string; name: string } | null
+      modules: Array<{ id: string; name: string }>
+      startDate: string | null
   dueDate: string | null
   sortOrder: number
   estimate: string | null

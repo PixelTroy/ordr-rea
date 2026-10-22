@@ -11,12 +11,12 @@
 | 顶栏：工作区切换、居中搜索、收件箱、用户菜单 | partial | M1 | 搜索框会打开对话框，结果在 M5。没有 Help / Get started |
 | 图标轨：Work、Wiki、AI、Settings、底部便签 | partial | M1 | AI 是说明页，没有助手 |
 | 侧栏：New work item、Home、Drafts、Your work、Stickies | partial | M2 | New work item 打开创建对话框。草稿和 Your work 已接数据。便签仍是占位 |
-| 侧栏 Workspace：Projects、Views、Cycles、Analytics、Archives、Dashboards | partial | M2 | Archives 列出已归档项目。Views / Cycles / Analytics / Dashboards 仍是路线图页 |
+| 侧栏 Workspace：Projects、Views、Cycles、Analytics、Archives、Dashboards | partial | M3 | Cycles 打开进行中的周期。Archives 列出已归档项目。Views / Analytics / Dashboards 仍是路线图页 |
 | 侧栏展开的项目子导航 | implemented | M2 | Work items、Cycles、Modules、Views、Pages、Intake |
-| 项目内横栏：Overview、Work items、Cycles、Modules、Views、Pages、Intake | implemented | M2 | Cycles、Modules、Views、Pages 的内容在后续里程碑 |
+| 项目内横栏：Overview、Work items、Cycles、Modules、Views、Pages、Intake | partial | M3 | Cycles 和 Modules 已可用。Views、Pages 仍是后续里程碑 |
 | URL `/{ws}/`、`/{ws}/projects/`、`/{ws}/settings/` | implemented | M1 | |
 | URL `/{ws}/projects/{id}/issues/`、`/overview/`、`/intake/` | implemented | M2 | |
-| URL `/{ws}/projects/{id}/cycles|modules|views|pages/` | partial | M2 | 路由和空状态已在，数据在 M3–M5 |
+| URL `/{ws}/projects/{id}/cycles|modules|views|pages/` | partial | M3 | 周期和模块已可用。Views、Pages 仍是空状态 |
 | URL `/{ws}/browse/{KEY-N}/` | implemented | M2 | |
 | URL `/{ws}/workspace-views/all-issues/`、`/active-cycles/`、`/analytics/`、`/notifications/`、`/wiki/` | partial | M1 | 路由存在，内容未做 |
 | URL `/{ws}/drafts/`、`/{ws}/your-work/`、`/{ws}/archives/` | implemented | M2 | |
@@ -72,13 +72,13 @@
 
 | 能力 | 状态 | 里程碑 | 说明 |
 | --- | --- | --- | --- |
-| 项目周期：Active / Upcoming / Completed | not-implemented | M3 | |
-| 完成率、日期、负责人头像、燃尽、领先/落后 | not-implemented | M3 | |
-| 周期详情 `/{ws}/projects/{id}/cycles/{cycleId}/` | not-implemented | M3 | 列表布局、右侧日期/状态/进度、可预填周期的创建框、添加已有工作项 |
-| 同一项目只允许一个进行中的周期，日期不重叠 | not-implemented | M3 | |
-| 工作区 Active cycles | not-implemented | M3 | |
-| 模块列表 / 甘特、状态与日期 | not-implemented | M3 | 状态 Backlog / Planned / In Progress / Paused / Completed / Cancelled |
-| 模块详情 `/{ws}/projects/{id}/modules/{moduleId}/` | not-implemented | M3 | 创建框：标题、描述、起止日期、状态、负责人、成员 |
+| 项目周期：Active / Upcoming / Completed | implemented | M3 | 日期范围不能重叠，因此同一天只有一个进行中的周期 |
+| 完成率、日期、负责人头像、燃尽、领先/落后 | implemented | M3 | 燃尽理想线按范围线性下降，实际剩余看 `completedAt` |
+| 周期详情 `/{ws}/projects/{id}/cycles/{cycleId}/` | implemented | M3 | 工作项列表、右侧状态/负责人/标签、新建或添加已有工作项 |
+| 同一项目只允许一个进行中的周期，日期不重叠 | implemented | M3 | 重叠返回 400 |
+| 工作区 Active cycles | implemented | M3 | `/{ws}/active-cycles/` |
+| 模块列表 / 甘特、状态与日期 | implemented | M3 | 状态 Backlog / Planned / In Progress / Paused / Completed / Cancelled |
+| 模块详情 `/{ws}/projects/{id}/modules/{moduleId}/` | implemented | M3 | 创建框含标题、描述、起止日期、状态。成员在 API 里 |
 | 项目 Overview 进度条 | partial | M2 | 按状态分组的进度条和侧栏。封面图和 Milestones 不做 |
 
 ## 页面、收件箱（M4）

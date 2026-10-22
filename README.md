@@ -25,7 +25,7 @@ Redis         登录计数，后续的协作广播
 
 认证是邮箱 + 密码。访问 JWT（15 分钟）和刷新 JWT（30 天，轮换，只存哈希）都放在 httpOnly cookie 里。工作区 URL 是 `/{slug}`。角色是 Admin、Member、Guest；创建者额外标记为 Owner。邀请不发邮件，API 返回链接并写入日志，接受时登录邮箱必须和邀请一致。
 
-完整表结构（含尚未迁移的 M3–M5）在 [docs/schema.md](docs/schema.md)。和 Plane 界面的对照在 [docs/parity.md](docs/parity.md)。
+完整表结构（含尚未迁移的 M4–M5）在 [docs/schema.md](docs/schema.md)。和 Plane 界面的对照在 [docs/parity.md](docs/parity.md)。
 
 ## 本地启动
 
@@ -76,8 +76,8 @@ pnpm test:e2e
 | 里程碑 | 内容 | 状态 |
 | --- | --- | --- |
 | M1 | 单体仓库、认证、工作区、成员邀请、外壳、CI | 已完成 |
-| M2 | 项目与工作项：状态、优先级、标签、负责人、子工作项、关系、活动、列表、看板、日历、表格、甘特、Intake | 本版本 |
-| M3 | 周期（日期、进度、燃尽）和模块 | 计划 |
+| M2 | 项目与工作项：状态、优先级、标签、负责人、子工作项、关系、活动、列表、看板、日历、表格、甘特、Intake | 已完成 |
+| M3 | 周期（日期、进度、燃尽）和模块 | 本版本 |
 | M4 | 协作页面（Tiptap / Yjs）、评论、@提及、通知 | 计划 |
 | M5 | 保存的视图与筛选、搜索、导入导出、API token、Webhook | 计划 |
 

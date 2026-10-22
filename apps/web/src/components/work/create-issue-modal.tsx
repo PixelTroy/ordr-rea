@@ -10,6 +10,7 @@ export type CreateIssueSeed = {
   projectId?: string
   stateId?: string
   parentId?: string
+  cycleId?: string
 }
 
 export function CreateIssueModal({
@@ -84,6 +85,7 @@ export function CreateIssueModal({
           startDate: startDate || null,
           dueDate: dueDate || null,
           parentId: parentId || null,
+          cycleId: seed.cycleId,
         }),
       })
       onCreated(created.issue)

@@ -29,6 +29,8 @@ const createSchema = z.object({
   parentId: z.string().nullable().optional(),
   estimate: z.string().max(16).nullable().optional(),
   isDraft: z.boolean().optional(),
+  cycleId: z.string().optional(),
+  moduleIds: z.array(z.string()).optional(),
 })
 
 const updateSchema = createSchema.partial().extend({
@@ -74,6 +76,14 @@ export class IssuesService {
     const issue = await this.prisma.$transaction(async (tx) => {
       const state = await this.resolveState(tx, ctx.project.id, data.stateId)
       await this.assertParent(tx, ctx.project.id, 'new', data.parentId ?? null)
+      if (data.cycleId) {
+        const cycle = await tx.cycle.findFirst({ where: { id: data.cycleId, projectId: ctx.project.id } })
+        if (!cycle) throw new BadRequestException('Cycle not found')
+      }
+      if (data.moduleIds?.length) {
+        const found = await tx.module.count({ where: { projectId: ctx.project.id, id: { in: data.moduleIds } } })
+        if (found !== new Set(data.moduleIds).size) throw new BadRequestException('Module not found')
+      }
       const counter = await tx.project.update({
         where: { id: ctx.project.id },
         data: { issueCounter: { increment: 1 } },
@@ -101,6 +111,10 @@ export class IssuesService {
           },
           labels: { create: this.unique(data.labelIds ?? []).map((labelId) => ({ labelId })) },
           subscribers: { create: { userId: user.id } },
+          ...(data.cycleId ? { cycleIssue: { create: { cycleId: data.cycleId } } } : {}),
+          ...(data.moduleIds?.length
+            ? { moduleIssues: { create: data.moduleIds.map((moduleId) => ({ moduleId })) } }
+            : {}),
         },
       })
       await tx.activity.create({
@@ -582,6 +596,8 @@ export class IssuesService {
       labels: { include: { label: true } },
       parent: { select: { id: true, sequenceId: true, title: true } },
       children: { select: { id: true, state: { select: { group: true } } } },
+      cycleIssue: { include: { cycle: { select: { id: true, name: true } } } },
+      moduleIssues: { include: { module: { select: { id: true, name: true } } } },
       _count: { select: { links: true, relations: true, attachments: true } },
     } satisfies Prisma.IssueInclude
   }
@@ -606,6 +622,8 @@ export class IssuesService {
       labels: Array<{ label: { id: string; name: string; color: string } }>
       parent: { id: string; sequenceId: number; title: string } | null
       children?: Array<{ id: string; state: { group: StateGroup } }>
+      cycleIssue?: { cycle: { id: string; name: string } } | null
+      moduleIssues?: Array<{ module: { id: string; name: string } }>
       _count?: { links: number; relations: number; attachments: number }
     },
     identifier: string,
@@ -626,6 +644,8 @@ export class IssuesService {
       linkCount: issue._count?.links ?? 0,
       relationCount: issue._count?.relations ?? 0,
       attachmentCount: issue._count?.attachments ?? 0,
+      cycle: issue.cycleIssue?.cycle ?? null,
+      modules: issue.moduleIssues?.map((row) => row.module) ?? [],
       startDate: issue.startDate,
       dueDate: issue.dueDate,
       sortOrder: issue.sortOrder,
