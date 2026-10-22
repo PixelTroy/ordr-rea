@@ -1,0 +1,37 @@
+import { expect, test } from '@playwright/test'
+
+test('save a view and find a work item from search', async ({ page }) => {
+  const stamp = Date.now()
+  const slug = `lab-${stamp}`
+  await page.goto('/signup')
+  await page.getByTestId('signup-name').fill('Ada Lovelace')
+  await page.getByTestId('signup-email').fill(`ada-${stamp}@example.com`)
+  await page.getByTestId('signup-password').fill('password123')
+  await page.getByTestId('signup-submit').click()
+  await page.getByTestId('workspace-name').fill(`Lab ${stamp}`)
+  await page.getByTestId('workspace-submit').click()
+  await page.getByRole('link', { name: 'Projects', exact: true }).click()
+  await page.getByTestId('add-project').click()
+  await page.getByTestId('project-name').fill('Clone Research')
+  await page.getByTestId('project-identifier').fill('CLONE')
+  await page.getByTestId('project-submit').click()
+  await page.getByTestId('add-work-item').click()
+  await page.getByTestId('issue-title').fill('Beacon work')
+  await page.getByTestId('issue-submit').click()
+  await expect(page.getByTestId('issue-row').filter({ hasText: 'Beacon work' })).toBeVisible()
+
+  await page.getByTestId('tab-views').click()
+  await page.getByTestId('add-view').click()
+  await page.getByTestId('view-name').fill('Beacon view')
+  await page.getByTestId('view-submit').click()
+  await expect(page.getByTestId('view-card')).toContainText('Beacon view')
+  await expect(page.getByTestId('view-card')).toContainText('Public')
+  await page.getByTestId('view-card').click()
+  await expect(page).toHaveURL(new RegExp(`/${slug}/projects/.+/views/[^/]+$`))
+  await expect(page.getByTestId('view-title')).toHaveText('Beacon view')
+  await expect(page.getByTestId('issue-row').filter({ hasText: 'Beacon work' })).toBeVisible()
+
+  await page.getByTestId('search-open').click()
+  await page.getByTestId('search-input').fill('Beacon')
+  await expect(page.getByTestId('search-result').filter({ hasText: 'Beacon work' })).toBeVisible()
+})

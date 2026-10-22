@@ -1,0 +1,27 @@
+import { expect, test } from '@playwright/test'
+
+test('add an active cycle and open its detail', async ({ page }) => {
+  const stamp = Date.now()
+  const slug = `lab-${stamp}`
+  await page.goto('/signup')
+  await page.getByTestId('signup-name').fill('Ada Lovelace')
+  await page.getByTestId('signup-email').fill(`ada-${stamp}@example.com`)
+  await page.getByTestId('signup-password').fill('password123')
+  await page.getByTestId('signup-submit').click()
+  await page.getByTestId('workspace-name').fill(`Lab ${stamp}`)
+  await page.getByTestId('workspace-submit').click()
+  await expect(page).toHaveURL(new RegExp(`/${slug}`))
+  await page.getByRole('link', { name: 'Projects', exact: true }).click()
+  await page.getByTestId('add-project').click()
+  await page.getByTestId('project-name').fill('Clone Research')
+  await page.getByTestId('project-identifier').fill('CLONE')
+  await page.getByTestId('project-submit').click()
+  await page.getByTestId('tab-cycles').click()
+  await page.getByTestId('add-cycle').click()
+  await page.getByTestId('cycle-name').fill('Sprint Alpha')
+  await page.getByTestId('cycle-submit').click()
+  await expect(page.getByTestId('cycle-card')).toContainText('Sprint Alpha')
+  await page.getByTestId('cycle-card').click()
+  await expect(page).toHaveURL(/\/cycles\/[^/]+$/)
+  await expect(page.getByText('ACTIVE')).toBeVisible()
+})

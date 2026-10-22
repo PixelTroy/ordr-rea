@@ -1,0 +1,7 @@
+process.env.DATABASE_URL ||= 'postgresql://ordr:ordr@localhost:5432/ordr_test'
+process.env.REDIS_URL ||= 'redis://localhost:6379'
+process.env.JWT_ACCESS_SECRET ||= 'test-access-secret-key-32bytes'
+process.env.JWT_REFRESH_SECRET ||= 'test-refresh-secret-key-32b'
+process.env.APP_URL ||= 'http://localhost:3000'
+process.env.WEB_ORIGIN ||= 'http://localhost:3000'
+process.env.COOKIE_SECURE ||= 'false'

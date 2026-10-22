@@ -1,0 +1,27 @@
+{
+  "name": "ordr",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Ordr is a self-hosted work management app. Plane is a product reference only; this code is original.",
+  "packageManager": "pnpm@10.33.4",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @ordr/shared build && pnpm --parallel --filter @ordr/api --filter @ordr/web dev",
+    "build": "pnpm --filter @ordr/shared build && pnpm --filter @ordr/api build && pnpm --filter @ordr/web build",
+    "lint": "pnpm --filter @ordr/shared build && pnpm --filter @ordr/api exec prisma generate && pnpm --filter @ordr/api lint && pnpm --filter @ordr/web lint && eslint .",
+    "test": "pnpm --filter @ordr/shared build && pnpm --filter @ordr/api test",
+    "test:e2e": "playwright test",
+    "db:migrate": "pnpm --filter @ordr/api exec prisma migrate deploy"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@prisma/client", "@prisma/engines", "prisma", "@nestjs/core"]
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "eslint": "^9.24.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.29.1"
+  }
+}
