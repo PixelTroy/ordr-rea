@@ -49,6 +49,7 @@ const groups = [
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
   const { slug } = useWorkspace()
   const path = usePathname()
+  if (path.includes('/settings/projects/')) return <div className="min-h-full bg-white">{children}</div>
   return (
     <div className="flex min-h-full">
       <aside className="w-60 shrink-0 border-r border-line bg-side p-4">

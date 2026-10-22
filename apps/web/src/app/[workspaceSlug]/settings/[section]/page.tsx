@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useWorkspace } from '@/components/shell/workspace-provider'
 
@@ -34,15 +33,12 @@ export default function SettingsSectionPage() {
       <h2 className="text-xl font-semibold">{title}</h2>
       <p className="mt-2 text-sm text-muted">
         {tokens
-          ? 'Personal access tokens live on your profile and will be added with the developer milestone.'
+          ? 'Personal access tokens for this workspace will be created here. The form is title, description, and an expiration date or never expires.'
           : 'This setting is listed so the workspace settings map matches the product layout. It is not available yet.'}
       </p>
-      {tokens ? (
-        <Link href="/settings/profile/api-tokens" className="mt-4 inline-block text-sm font-medium underline">
-          Open profile tokens
-        </Link>
-      ) : null}
-      <p className="mt-6 text-xs text-muted">Workspace {slug}</p>
+      <p className="mt-6 text-xs text-muted">
+        {tokens ? `/${slug}/settings/access-tokens` : `Workspace ${slug}`}
+      </p>
     </div>
   )
 }

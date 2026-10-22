@@ -16,10 +16,22 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  sessions         Session[]
-  memberships      WorkspaceMember[]
-  invitesSent      WorkspaceInvite[] @relation("InvitesSent")
-  ownedWorkspaces  Workspace[]       @relation("WorkspaceOwner")
+  sessions           Session[]
+  memberships        WorkspaceMember[]
+  invitesSent        WorkspaceInvite[] @relation("InvitesSent")
+  ownedWorkspaces    Workspace[]       @relation("WorkspaceOwner")
+  ledProjects        Project[]         @relation("ProjectLead")
+  defaultAssigneeOf  Project[]         @relation("ProjectDefaultAssignee")
+  projectMemberships ProjectMember[]
+  createdIssues      Issue[]           @relation("IssueAuthor")
+  assignments        IssueAssignee[]
+  activities         Activity[]
+  votes              IssueVote[]
+  subscriptions      IssueSubscription[]
+  linksCreated       IssueLink[]
+  attachments        Attachment[]
+  intakeItems        IntakeItem[]
+  recentVisits       RecentVisit[]
 
   @@map("users")
 }
@@ -57,9 +69,11 @@ model Workspace {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  owner   User              @relation("WorkspaceOwner", fields: [ownerId], references: [id])
-  members WorkspaceMember[]
-  invites WorkspaceInvite[]
+  owner    User              @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+  members  WorkspaceMember[]
+  invites  WorkspaceInvite[]
+  projects Project[]
+  recents  RecentVisit[]
 
   @@map("workspaces")
 }
@@ -96,4 +110,328 @@ model WorkspaceInvite {
 
   @@index([workspaceId, email])
   @@map("workspace_invites")
+}
+
+enum ProjectNetwork {
+  PUBLIC
+  PRIVATE
+}
+
+enum ProjectRole {
+  ADMIN
+  MEMBER
+  GUEST
+}
+
+enum StateGroup {
+  BACKLOG
+  UNSTARTED
+  STARTED
+  COMPLETED
+  CANCELLED
+}
+
+enum Priority {
+  URGENT
+  HIGH
+  MEDIUM
+  LOW
+  NONE
+}
+
+enum IssueRelationType {
+  RELATES_TO
+  BLOCKS
+  BLOCKED_BY
+  DUPLICATE_OF
+}
+
+enum IntakeStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum EstimateType {
+  NONE
+  POINTS
+  CATEGORIES
+}
+
+model Project {
+  id                  String         @id @default(cuid())
+  workspaceId         String         @map("workspace_id")
+  name                String
+  identifier          String
+  description         String         @default("")
+  emoji               String         @default("📁")
+  coverColor          String         @default("#3e4db5") @map("cover_color")
+  network             ProjectNetwork @default(PUBLIC)
+  leadId              String?        @map("lead_id")
+  defaultAssigneeId   String?        @map("default_assignee_id")
+  timezone            String         @default("UTC")
+  issueCounter        Int            @default(0) @map("issue_counter")
+  cyclesEnabled       Boolean        @default(true) @map("cycles_enabled")
+  modulesEnabled      Boolean        @default(true) @map("modules_enabled")
+  viewsEnabled        Boolean        @default(true) @map("views_enabled")
+  pagesEnabled        Boolean        @default(true) @map("pages_enabled")
+  intakeEnabled       Boolean        @default(true) @map("intake_enabled")
+  timeTrackingEnabled Boolean        @default(false) @map("time_tracking_enabled")
+  estimateType        EstimateType   @default(NONE) @map("estimate_type")
+  estimateScale       Json?          @map("estimate_scale")
+  archivedAt          DateTime?      @map("archived_at")
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @updatedAt @map("updated_at")
+
+  workspace       Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  lead            User?           @relation("ProjectLead", fields: [leadId], references: [id])
+  defaultAssignee User?           @relation("ProjectDefaultAssignee", fields: [defaultAssigneeId], references: [id])
+  members         ProjectMember[]
+  states          State[]
+  labels          Label[]
+  issues          Issue[]
+  intakeItems     IntakeItem[]
+
+  @@unique([workspaceId, identifier])
+  @@index([workspaceId])
+  @@map("projects")
+}
+
+model ProjectMember {
+  id        String      @id @default(cuid())
+  projectId String      @map("project_id")
+  userId    String      @map("user_id")
+  role      ProjectRole @default(MEMBER)
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([userId])
+  @@map("project_members")
+}
+
+model State {
+  id        String     @id @default(cuid())
+  projectId String     @map("project_id")
+  name      String
+  color     String
+  group     StateGroup
+  sequence  Int
+  isDefault Boolean    @default(false) @map("is_default")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issues  Issue[]
+
+  @@index([projectId, sequence])
+  @@map("states")
+}
+
+model Label {
+  id        String  @id @default(cuid())
+  projectId String  @map("project_id")
+  name      String
+  color     String
+  parentId  String? @map("parent_id")
+
+  project  Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parent   Label?       @relation("LabelGroup", fields: [parentId], references: [id])
+  children Label[]      @relation("LabelGroup")
+  issues   IssueLabel[]
+
+  @@unique([projectId, name])
+  @@map("labels")
+}
+
+model Issue {
+  id          String    @id @default(cuid())
+  projectId   String    @map("project_id")
+  sequenceId  Int       @map("sequence_id")
+  title       String
+  description String    @default("")
+  priority    Priority  @default(NONE)
+  stateId     String    @map("state_id")
+  parentId    String?   @map("parent_id")
+  createdById String    @map("created_by_id")
+  startDate   DateTime? @map("start_date")
+  dueDate     DateTime? @map("due_date")
+  completedAt DateTime? @map("completed_at")
+  sortOrder   Float     @default(0) @map("sort_order")
+  estimate    String?
+  isDraft     Boolean   @default(false) @map("is_draft")
+  archivedAt  DateTime? @map("archived_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  project     Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  state       State               @relation(fields: [stateId], references: [id])
+  parent      Issue?              @relation("SubIssues", fields: [parentId], references: [id])
+  children    Issue[]             @relation("SubIssues")
+  createdBy   User                @relation("IssueAuthor", fields: [createdById], references: [id])
+  assignees   IssueAssignee[]
+  labels      IssueLabel[]
+  relations   IssueRelation[]     @relation("RelationFrom")
+  relatedFrom IssueRelation[]     @relation("RelationTo")
+  links       IssueLink[]
+  attachments Attachment[]
+  votes       IssueVote[]
+  subscribers IssueSubscription[]
+  activities  Activity[]
+  intake      IntakeItem[]
+
+  @@unique([projectId, sequenceId])
+  @@index([projectId, stateId])
+  @@index([parentId])
+  @@map("issues")
+}
+
+model IssueAssignee {
+  issueId String @map("issue_id")
+  userId  String @map("user_id")
+
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([issueId, userId])
+  @@index([userId])
+  @@map("issue_assignees")
+}
+
+model IssueLabel {
+  issueId String @map("issue_id")
+  labelId String @map("label_id")
+
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  label Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([issueId, labelId])
+  @@map("issue_labels")
+}
+
+model IssueRelation {
+  id             String            @id @default(cuid())
+  issueId        String            @map("issue_id")
+  relatedIssueId String            @map("related_issue_id")
+  type           IssueRelationType
+  createdAt      DateTime          @default(now()) @map("created_at")
+
+  issue        Issue @relation("RelationFrom", fields: [issueId], references: [id], onDelete: Cascade)
+  relatedIssue Issue @relation("RelationTo", fields: [relatedIssueId], references: [id], onDelete: Cascade)
+
+  @@unique([issueId, relatedIssueId, type])
+  @@index([relatedIssueId])
+  @@map("issue_relations")
+}
+
+model IssueLink {
+  id          String   @id @default(cuid())
+  issueId     String   @map("issue_id")
+  url         String
+  title       String
+  createdById String   @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  issue     Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  createdBy User  @relation(fields: [createdById], references: [id])
+
+  @@map("issue_links")
+}
+
+model Attachment {
+  id           String   @id @default(cuid())
+  issueId      String   @map("issue_id")
+  filename     String
+  mimeType     String   @map("mime_type")
+  size         Int
+  storageKey   String   @map("storage_key")
+  uploadedById String   @map("uploaded_by_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  issue      Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  uploadedBy User  @relation(fields: [uploadedById], references: [id])
+
+  @@map("attachments")
+}
+
+model IssueVote {
+  issueId String @map("issue_id")
+  userId  String @map("user_id")
+  value   Int
+
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([issueId, userId])
+  @@map("issue_votes")
+}
+
+model IssueSubscription {
+  issueId String   @map("issue_id")
+  userId  String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([issueId, userId])
+  @@map("issue_subscriptions")
+}
+
+model Activity {
+  id          String   @id @default(cuid())
+  workspaceId String   @map("workspace_id")
+  projectId   String?  @map("project_id")
+  issueId     String?  @map("issue_id")
+  actorId     String   @map("actor_id")
+  action      String
+  field       String?
+  oldValue    String?  @map("old_value")
+  newValue    String?  @map("new_value")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  actor User   @relation(fields: [actorId], references: [id])
+  issue Issue? @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@index([issueId, createdAt])
+  @@index([projectId, createdAt])
+  @@map("activities")
+}
+
+model IntakeItem {
+  id          String       @id @default(cuid())
+  projectId   String       @map("project_id")
+  title       String
+  description String       @default("")
+  status      IntakeStatus @default(PENDING)
+  source      String       @default("In-app")
+  issueId     String?      @map("issue_id")
+  createdById String       @map("created_by_id")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issue     Issue?  @relation(fields: [issueId], references: [id])
+  createdBy User    @relation(fields: [createdById], references: [id])
+
+  @@index([projectId, status])
+  @@map("intake_items")
+}
+
+model RecentVisit {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  workspaceId String   @map("workspace_id")
+  entityType  String   @map("entity_type")
+  entityId    String   @map("entity_id")
+  label       String
+  href        String
+  visitedAt   DateTime @default(now()) @map("visited_at")
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, entityType, entityId])
+  @@index([userId, visitedAt])
+  @@map("recent_visits")
 }

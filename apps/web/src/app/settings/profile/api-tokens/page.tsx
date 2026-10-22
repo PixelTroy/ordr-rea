@@ -11,7 +11,7 @@ export default function ApiTokensPlaceholder() {
       <h1 className="mt-2 text-2xl font-semibold">Personal access tokens</h1>
       <p className="mt-2 text-sm text-muted">
         {loading ? 'Loading…' : user ? `Signed in as ${user.email}. ` : 'Log in to manage tokens. '}
-        Token creation arrives with the developer milestone. Until then the API uses the session cookie.
+        Tokens are created in a workspace at /{'{workspace}'}/settings/access-tokens, with a title, description, and an expiration date. That screen arrives with the developer milestone.
       </p>
       <Link href="/" className="mt-6 inline-block text-sm font-medium underline">
         Back to Ordr

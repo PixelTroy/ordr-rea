@@ -1,16 +1,27 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/auth-provider'
 import { useWorkspace } from '@/components/shell/workspace-provider'
+import { api } from '@/lib/api'
+
+type Recent = { id: string; label: string; href: string; entityType: string; visitedAt: string }
 
 export default function WorkspaceHomePage() {
   const { user } = useAuth()
   const { workspace, slug } = useWorkspace()
+  const [recents, setRecents] = useState<Recent[]>([])
   const now = new Date()
   const hour = now.getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
   const date = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+
+  useEffect(() => {
+    api<{ recents: Recent[] }>(`/api/v1/workspaces/${slug}/recents`)
+      .then((body) => setRecents(body.recents))
+      .catch(() => setRecents([]))
+  }, [slug])
 
   return (
     <div className="mx-auto max-w-5xl px-8 py-8">
@@ -21,10 +32,19 @@ export default function WorkspaceHomePage() {
       <p className="mt-1 text-sm text-muted">{workspace.name}</p>
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         <Widget title="Quick links" action="Add quick link">
-          <p className="text-sm text-muted">Pin a project, view, or page. Quick links arrive with projects.</p>
+          <p className="text-sm text-muted">Pin a project, view, or page. Quick links arrive with saved views.</p>
         </Widget>
         <Widget title="Recents" action="All">
-          <p className="text-sm text-muted">Work items, pages, and projects you open will show up here.</p>
+          {recents.length === 0 ? <p className="text-sm text-muted">Work items and projects you open will show up here.</p> : null}
+          <ul className="space-y-2">
+            {recents.map((recent) => (
+              <li key={recent.id}>
+                <Link href={recent.href} className="block truncate text-sm hover:underline">
+                  {recent.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
           <Link href={`/${slug}/projects`} className="mt-3 inline-block text-sm font-medium underline">
             Browse projects
           </Link>

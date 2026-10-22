@@ -128,3 +128,34 @@ export function ErrorText({ children }: { children: ReactNode }) {
   if (!children) return null
   return <p className="text-sm text-red-600">{children}</p>
 }
+
+export function Modal({
+  title,
+  onClose,
+  children,
+  wide = false,
+}: {
+  title: string
+  onClose: () => void
+  children: ReactNode
+  wide?: boolean
+}) {
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/30 p-4" onMouseDown={onClose}>
+      <div
+        role="dialog"
+        aria-label={title}
+        className={`max-h-[90vh] w-full overflow-auto rounded-xl bg-white shadow-pop ${wide ? 'max-w-3xl' : 'max-w-lg'}`}
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-line px-4 py-3">
+          <h2 className="text-sm font-semibold">{title}</h2>
+          <button type="button" className="text-sm text-muted hover:text-ink" onClick={onClose} aria-label="Close">
+            Close
+          </button>
+        </div>
+        <div className="p-4">{children}</div>
+      </div>
+    </div>
+  )
+}

@@ -118,7 +118,7 @@ export function TopBar() {
                 <p className="truncate text-xs text-muted">{user.email}</p>
               </div>
               <Link
-                href="/settings/profile/api-tokens"
+                href={`/${slug}/settings/access-tokens`}
                 className="block rounded-md px-2 py-1.5 text-sm hover:bg-canvas"
                 onClick={() => setMenu(null)}
               >
